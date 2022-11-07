@@ -1,11 +1,19 @@
 hazelcast-client:
-  cluster-name: dev
+  cluster-name: 
   instance-name: query-client
-  # For local clusters
   network:
-    cluster-members:
-      - 127.0.0.1
-# For Hazelcast Cloud
-# properties:
-#   hazelcast.client.cloud.url: "https://uat.hazelcast.cloud" #Optional, if env is not default
-#   hazelcast.client.cloud.discovery.token: "TOKEN"
+    ssl:
+      enabled: true
+      properties:
+        protocol: TLS
+        trustStore: trade-queries/src/main/resources/client.truststore
+        trustStorePassword: 
+        trustStoreType: PKCS12
+        keyStore: trade-queries/src/main/resources/client.keystore
+        keyStorePassword: 
+        keyStoreType: PKCS12
+    hazelcast-cloud:
+      discovery-token: ""
+      enabled: true
+  properties:
+    hazelcast.client.cloud.url: https://api.viridian.hazelcast.com
