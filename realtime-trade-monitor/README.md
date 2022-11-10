@@ -7,138 +7,25 @@ an aggregation on the trades, storing the results into a separate map.
 These two maps are utilized by a live dashboard which offers drill down
 functionality into viewing individual trades that make up the aggregation.
 
-## How to run:
+## Run the Demo on Hazelcast Viridian:
 
-1. Build the project
+1. Open the Hazelcast Viridian console, click *Connect Client*, and go to the *Advanced setup* tab. Leave this window open. You'll need some of these details in the next step.
 
-```
-mvn package
-```
+2. Download the `client.keystore` and `client.truststore` files and save them to `/realtime-trade-monitor/trade-queries/src/main/resources` and `/realtime-trade-monitor/webapp/src/main/resources`.
 
-1. Create a topic on the Kafka cluster:
+3. Add the following details to the `hazelcast-client.yaml` configuration files in the `/realtime-trade-monitor/trade-queries/src/main/resources` and `/realtime-trade-monitor/webapp/src/main/resources` directories:
 
-```
-kafka-topics --create --replication-factor 1 --partitions 4 --topic trades --zookeeper localhost:2181
-```
+- Cluster name
+- Discovery token
+- Keystore and truststore password
+- Absolute path to the `client.keystore` and `client.truststore` files
 
-2. Start the Kafka producer
+3. You need a Kafka cluster that is reachable by Hazelcast Viridian. For demo purposes, the easiest way is
+   to create the simplest Kafka cluster on https://confluent.cloud with defaults.
 
-```
-java -jar trade-producer/target/trade-producer-5.0.jar <bootstrap servers> <trades per sec>
-```
+4. Create topic `trades` with 4 partitions. If you use https://confluent.cloud, go to Topics section in the UI.
 
-3. Start the Jet cluster. To configure cluster members you can edit 
-`hazelcast.yaml` in the `jet-server/src/main/resources` folder.
-
-```
-java -jar jet-server/target/jet-server-5.0.jar
-```
-
-4. Run the queries
-
-The cluster connection can be configured inside the `hazelcast-client.yaml` file.
-
-* Load static data into map: (Stock names)
-```
-java -jar trade-queries/target/trade-queries-5.0.jar load-symbols
-```
-
-* Ingest trades from Kafka
-
-```
-java -jar trade-queries/target/trade-queries-5.0.jar ingest-trades <bootstrap servers>
-```
-* Aggregate trades by symbol
-```
-java -jar trade-queries/target/trade-queries-5.0.jar aggregate-query <bootstrap servers>
-```
-
-5. Start the front end
-
-The cluster connection can be configured inside the `hazelcast-client.yaml` file.
-
-```
-java -jar webapp/target/webapp-5.0.jar 
-```
-
-Browse to localhost:9000 to see the dashboard.
-
-## How to run using Hazelcast Cloud:
-
-1. Create an Enterprise Hazelcast cluster at https://cloud.hazelcast.com/. Please pay attention to the additional
-   cluster settings: the `Public Access` option must be turned on.
-
-2. Open client configuration window on the cluster details page and grab:
-   - Cluster group name;
-   - Cluster discovery token. 
-   
-   If during the cluster creation you've turned on TLS encryption, you should also:
-     - grab Keystore and truststore password;
-     - download and extract Keystore file.
-
-3. Modify Hazelcast client configs `trade-queries/src/main/resources/hazelcast-client.yaml` and
-   `webapp/src/main/resources/hazelcast-client.yaml` 
-
-If you're not using TLS encryption for your cluster, use the following minimal working configuration:
-```
-hazelcast-client:
-  cluster-name: <CLUSTER_GROUP_NAME>
-  instance-name: query-client
-  properties:
-    hazelcast.client.cloud.discovery.token: "<CLUSTER_DISCOVERY_TOKEN>"
-```    
-
-For a cluster with TLS encryption, copy the `client.keystore` and `client.truststore` files downloaded on the 
-previous step into `trade-queries/src/main/resources` and `webapp/src/main/resources` folders, or use absolute path 
-to downloaded files in your client configuration. After that you should use the following configuration:
-```
-hazelcast-client:
-  cluster-name: <CLUSTER_GROUP_NAME>
-  instance-name: query-client
-  network:
-    ssl:
-      enabled: true
-      factory-class-name: com.hazelcast.nio.ssl.BasicSSLContextFactory
-      properties:
-        protocol: TLSv1.2
-        mutualAuthentication: REQUIRED
-        keyStore: trade-queries/src/main/resources/client.keystore
-        keyStorePassword: "<KEYSTORE_AND_TRUSTSTORE_PASSWORD>"
-        keyStoreType: jks
-        trustStore: trade-queries/src/main/resources/client.truststore
-        trustStorePassword: "<KEYSTORE_AND_TRUSTSTORE_PASSWORD>"
-        trustStoreType: jks
-  properties:
-    hazelcast.client.cloud.discovery.token: "<CLUSTER_DISCOVERY_TOKEN>"
-```
-
-4. (Only for clusters with TLS encryption). Update the `trade-queries/pom.xml` and `webapp/pom.xml` in order to use
-   enterprise client library which supports TLS enterprise feature:
-
-Before:
-```
-<dependency>
-   <groupId>com.hazelcast</groupId>
-   <artifactId>hazelcast</artifactId>
-   <version>${hazelcast.version}</version>
-</dependency>   
-```
-
-After:
-```
-<dependency>
-   <groupId>com.hazelcast</groupId>
-   <artifactId>hazelcast-enterprise</artifactId>
-   <version>${hazelcast.version}</version>
-</dependency>   
-```
-
-5. We need to have Kafka cluster that is reachable by Hazelcast Cloud nodes. For demo purposes, the easiest way is
-   to create the simplest Kafka cluster at https://confluent.cloud with defaults.
-
-6. Create topic `trades` with 4 partitions. If you use https://confluent.cloud, go to Topics section in the UI.
-
-7. Put all kafka consumer/producer properties in `trade-producer/src/main/resources/kafka.properties` and
+5. Put all kafka consumer/producer properties in `trade-producer/src/main/resources/kafka.properties` and
    `trade-queries/src/main/resources/kafka.properties`. If you use https://confluent.cloud you can find them in:
    `Data Integration > Client > New Client section`. The CLUSTER_API_KEY and CLUSTER_API_SECRET placeholders
    must be replaced with the values available at: `Data integration > API Keys`.
@@ -157,19 +44,19 @@ client.dns.lookup=use_all_dns_ips
 acks=all
 ```
 
-8. Build the project
+6. Build the project
 
 ```
 mvn package
 ```
 
-9. Start the Kafka producer
+7. Start the Kafka producer
 
 ```
 java -jar trade-producer/target/trade-producer-5.0.jar "" <trades per sec>
 ```
 
-10. Run the queries
+8. Run the queries
 
 * Load static data into map: (Stock names)
 ```
@@ -186,10 +73,10 @@ java -jar trade-queries/target/trade-queries-5.0.jar ingest-trades ""
 java -jar trade-queries/target/trade-queries-5.0.jar aggregate-query ""
 ```
 
-11. Start the front end
+9. Start the front end
 
 ```
 java -jar webapp/target/webapp-5.0.jar 
 ```
 
-12. Browse to [http://localhost:9000](http://localhost:9000) to see the dashboard
+10. Browse to [http://localhost:9000](http://localhost:9000) to see the dashboard
